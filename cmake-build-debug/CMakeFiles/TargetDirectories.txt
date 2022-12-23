@@ -1,0 +1,3 @@
+C:/Users/me/CLionProjects/2Y/CoursC/PtojetC/Nostra/cmake-build-debug/CMakeFiles/Nostra.dir
+C:/Users/me/CLionProjects/2Y/CoursC/PtojetC/Nostra/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/me/CLionProjects/2Y/CoursC/PtojetC/Nostra/cmake-build-debug/CMakeFiles/rebuild_cache.dir
