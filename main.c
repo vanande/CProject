@@ -9,6 +9,7 @@ Date:15/11/2021     Auteur:Vanande
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <time.h>
 #include <winsock.h>
@@ -19,14 +20,14 @@ void getAstrological(char astrological[30]);
 int connectDatabase(MYSQL *mysql);
 void disconnectDatabase(MYSQL * mysql);
 int funcUsed();
+int login(char name[30], MYSQL *mysql);
+
 
 int connectDatabase(MYSQL *mysql){
     if (mysql_real_connect(mysql, "localhost", "root", "", NULL, 3307, NULL, 0)) {
         printf("MySQL client version: %s\n", mysql_get_client_info());
         mysql_query(mysql, "CREATE DATABASE IF NOT EXISTS cProject");
         mysql_query(mysql, "USE cProject");
-        mysql_query(mysql, "DROP TABLE IF EXISTS user");
-        mysql_query(mysql, "CREATE TABLE IF NOT EXISTS user(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(30), last_path INT)");
         return 0;
     } else {
         printf("Erreur connexion a la BDD!");
@@ -88,11 +89,81 @@ int funcUsed(){
     }
 }
 
+int login(char name[30], MYSQL *mysql){
+    MYSQL_STMT *stmt;
+    unsigned long nameLen = strlen(name);
+    MYSQL_BIND bind[1];
+
+    const char *stmt_str = "INSERT INTO user(name) VALUES (?)";
+    unsigned long a;
+
+    mysql_query(mysql, "CREATE TABLE IF NOT EXISTS user(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(30), last_path INT)");
+    stmt = mysql_stmt_init(mysql);
+
+    // Prepare request
+    if (mysql_stmt_prepare(stmt, stmt_str, strlen(stmt_str)))
+    {
+        fprintf(stderr, " mysql_stmt_prepare(), INSERT failed\n");
+        fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+        exit(0);
+    }
+    fprintf(stdout, " prepare, INSERT successful\n");
+
+    // count param
+    /* Get the parameter count from the statement */
+    a = mysql_stmt_param_count(stmt);
+    fprintf(stdout, " total parameters in INSERT: %d\n", a);
+
+    /* Bind the data of params */
+    bind[0].buffer_type = MYSQL_TYPE_STRING;
+    bind[0].buffer = (char *)name;
+    bind[0].buffer_length = strlen(name);
+    bind[0].is_null = 0;
+    bind[0].length = &nameLen;
+
+    /* Bind the buffers */
+    if (mysql_stmt_bind_param(stmt, bind))
+    {
+        fprintf(stderr, " mysql_stmt_bind_param() failed\n");
+        fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+        exit(0);
+    }
+
+
+    /* Specify the data values for the first row */
+    strncpy(stmt_str, "MySQL", 50); /* string */
+
+
+    /* Execute the INSERT statement - 1*/
+    if (mysql_stmt_execute(stmt))
+    {
+        fprintf(stderr, " mysql_stmt_execute(), 1 failed\n");
+        fprintf(stderr, " %s\n", mysql_stmt_error(stmt));
+        exit(0);
+    }
+
+    /* Get the number of affected rows */
+    a= mysql_stmt_affected_rows(stmt);
+    fprintf(stdout, " total affected rows(insert 1): %lu\n",
+            (unsigned long) a);
+    /* Close the statement */
+    if (mysql_stmt_close(stmt))
+    {
+        /* mysql_stmt_close() invalidates stmt, so call          */
+        /* mysql_error(mysql) rather than mysql_stmt_error(stmt) */
+        fprintf(stderr, " failed while closing the statement\n");
+        fprintf(stderr, " %s\n", mysql_error(mysql));
+        exit(0);
+    }
+
+}
+
 int main(int argc, char ** argv){
-
-
+    int connected = 0;
+    int path;
     int ans = 0;
     int algo;
+    char username[30];
 
     MYSQL *mysql;
     mysql = mysql_init(NULL);
@@ -101,8 +172,10 @@ int main(int argc, char ** argv){
     connectDatabase(mysql);
 
 
-
-    printf("\nHi, what do you want ?");
+    printf("\nHi, register first ?");
+    printf("\nHow do u want to be called ?");
+    fgets(username, 30, stdin);
+    login(username, mysql);
 
     while(ans != -1) {
         printf("\n1 ... Need relationship advice");
@@ -143,7 +216,7 @@ int main(int argc, char ** argv){
             case 2: // Need financial advice
                 printf("\nCan you be more precise");
                 printf("\n1 ... Should I invest in Bitcoin ?");
-                printf("\n2 ... Should I start a new life ?");
+                printf("\n2 ... Should I become a freelancer ?");
                 printf("\n3 ... Other");
                 scanf("%d", &ans);
                 switch(ans){
