@@ -97,18 +97,27 @@ void inputString(char* string, int size){
 }
 
 int login(char *name, MYSQL *mysql){
-
-    char stmt_str[50] = "INSERT INTO user(name) VALUES ('";
-    char test[20] = "Salut";
-
-    printf("\n%s", name);
-    printf("\n%s", stmt_str);
-    strcat(stmt_str, name);
-    strcat(stmt_str, "')");
-    printf("\n%s", stmt_str);
+    char stmt_select[50] = "SELECT * FROM user WHERE name = '";
+    char stmt_insert[50] = "INSERT INTO user(name) VALUES ('";
 
     mysql_query(mysql, "CREATE TABLE IF NOT EXISTS user(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(30), last_path INT)");
-    mysql_query(mysql, stmt_str);
+
+    strcat(stmt_select, name);
+    strcat(stmt_select, "'");
+
+    mysql_query(mysql,stmt_select);
+    printf("\n%s", stmt_select);
+    printf("\nRow affected%d",mysql_field_count(mysql));
+
+    strcat(stmt_insert, name);
+    strcat(stmt_insert, "')");
+
+    mysql_query(mysql, stmt_insert);
+
+    if (!mysql_affected_rows(mysql)){
+        printf("\nInsert error");
+        return 1;
+    }
 
 
 }
