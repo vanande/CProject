@@ -18,6 +18,61 @@ Date:15/11/2021     Auteur:Vanande
 #include "functions.h"
 
 
+struct Subject {
+    char *name;
+    int numOptions;
+    char *options[];
+};
+
+// Function to create and initialize a Subject struct
+struct Subject *createSubject(char *name, int numOptions, char **options) {
+    // Size of the Subject struct plus space for the options array
+    size_t size = sizeof(struct Subject) + numOptions * sizeof(char *);
+    // Dynamically allocate memory for the Subject struct
+    struct Subject *subject = malloc(size);
+    if (subject == NULL) {
+        // Error handling
+        fprintf(stderr, "Error allocating memory\n");
+        return NULL;
+    }
+    // Initialize the name field
+    subject->name = name;
+    // Initialize the numOptions field
+    subject->numOptions = numOptions;
+    // Initialize the options array
+    for (int i = 0; i < numOptions; i++) {
+        subject->options[i] = options[i];
+    }
+    return subject;
+}
+
+// Function to print a Subject struct and its options
+void printSubject(struct Subject *subject) {
+    printf("\n\n%s", subject->name);
+    for (int i = 0; i < subject->numOptions; i++) {
+        printf("\n%s", subject->options[i]);
+    }
+}
+
+// Function to create, initialize, and store a Subject struct in the subjects array
+void addSubject(struct Subject ***subjects, int *numSubjects, char *name, int numOptions, char **options) {
+    // Create and initialize the Subject struct
+    struct Subject *subject = createSubject(name, numOptions, options);
+    // Increase the size of the subjects array
+    *subjects = realloc(*subjects, (*numSubjects + 1) * sizeof(struct Subject *));
+    // Store the Subject struct in the subjects array
+    (*subjects)[*numSubjects] = subject;
+    // Increment the numSubjects variable
+    (*numSubjects)++;
+}
+
+// Function to free the memory for each Subject struct in the subjects array
+void freeSubjects(struct Subject **subjects, int numSubjects) {
+    for (int i = 0; i < numSubjects; i++) {
+        free(subjects[i]);
+    }
+    free(subjects);
+}
 
 int main(int argc, char ** argv){
     int connected = 0;
@@ -25,6 +80,28 @@ int main(int argc, char ** argv){
     int ans = 0;
     int algo;
     char username[30];
+    struct Subject **subjects = malloc(sizeof(struct Subject*));
+    struct Subject *subject;
+    int numSubjects = 0;
+    char *options[2];
+
+    // Create and initialize the first Subject struct
+    options[0] = "Should I leave my wife?";
+    options[1] = "Should I stay single for the rest of my life?";
+    addSubject(&subjects, &numSubjects, "Relationship advice", 2, options);
+
+// Create and initialize the second Subject struct
+    options[0] = "Should I invest in stocks?";
+    options[1] = "Should I save my money in a bank?";
+    addSubject(&subjects, &numSubjects, "Financial advice", 2, options);
+
+    // Print the Subject structs
+    for (int i = 0; i < numSubjects; i++)
+        printSubject(subjects[i]);
+
+    freeSubjects(subjects, numSubjects);
+    return 0;
+
 
     MYSQL *mysql;
     mysql = mysql_init(NULL);
