@@ -13,7 +13,6 @@ link_directories("C:/Users/me/Desktop/CtoMySQL/curl-7.87.0-win64-mingw/curl/lib"
 link_libraries(CURL)
 
 
-
 add_executable(Nostra main.c)
 
 target_link_libraries(Nostra libmysql)
