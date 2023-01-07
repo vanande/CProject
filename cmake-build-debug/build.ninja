@@ -52,7 +52,7 @@ build cmake_object_order_depends_target_Nostra: phony || CMakeFiles/Nostra.dir
 build CMakeFiles/Nostra.dir/main.c.obj: C_COMPILER__Nostra_Debug C$:/Users/me/CLionProjects/2Y/CoursC/PtojetC/Nostra/main.c || cmake_object_order_depends_target_Nostra
   DEP_FILE = CMakeFiles\Nostra.dir\main.c.obj.d
   FLAGS = -Wall -g -std=gnu99
-  INCLUDES = -IC:/wamp64(1)/bin/mysql/mysql5.7.31/include
+  INCLUDES = -IC:/wamp64(1)/bin/mysql/mysql5.7.31/include -IC:/Users/me/Desktop/CtoMySQL/curl-7.87.0-win64-mingw/curl/include
   OBJECT_DIR = CMakeFiles\Nostra.dir
   OBJECT_FILE_DIR = CMakeFiles\Nostra.dir
 
@@ -66,8 +66,8 @@ build CMakeFiles/Nostra.dir/main.c.obj: C_COMPILER__Nostra_Debug C$:/Users/me/CL
 
 build Nostra.exe: C_EXECUTABLE_LINKER__Nostra_Debug CMakeFiles/Nostra.dir/main.c.obj
   FLAGS = -Wall -g
-  LINK_LIBRARIES = -llibmysql  -llibmysql  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
-  LINK_PATH = -LC:/wamp64(1)/bin/mysql/mysql5.7.31/lib
+  LINK_LIBRARIES = -llibmysql  -lCURL  -llibmysql  -lCURL  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
+  LINK_PATH = -LC:/wamp64(1)/bin/mysql/mysql5.7.31/lib   -LC:/Users/me/Desktop/CtoMySQL/curl-7.87.0-win64-mingw/curl/lib
   OBJECT_DIR = CMakeFiles\Nostra.dir
   POST_BUILD = cd .
   PRE_LINK = cd .

@@ -14,6 +14,7 @@ Date:15/11/2021     Auteur:Vanande
 #include <time.h>
 #include <winsock.h>
 #include <MYSQL/mysql.h>
+#include <curl/curl.h>
 
 void getLastTweet(char name[]);
 void getAstrological(char astrological[30]);
@@ -22,6 +23,10 @@ void disconnectDatabase(MYSQL * mysql);
 int funcUsed();
 int login(char name[30], MYSQL *mysql);
 void inputString(char* string, int size);
+void finish_with_error(MYSQL *con);
+int createUser(char * name, MYSQL *mysql);
+
+
 
 int connectDatabase(MYSQL *mysql){
     if (mysql_real_connect(mysql, "localhost", "root", "", NULL, 3307, NULL, 0)) {
@@ -96,29 +101,69 @@ void inputString(char* string, int size){
         fflush(stdin);
 }
 
-int login(char *name, MYSQL *mysql){
-    char stmt_select[50] = "SELECT * FROM user WHERE name = '";
+
+void finish_with_error(MYSQL *con){
+    fprintf(stderr, "%s\n", mysql_error(con));
+    mysql_close(con);
+    exit(1);
+}
+
+
+int createUser(char * name, MYSQL *mysql){
     char stmt_insert[50] = "INSERT INTO user(name) VALUES ('";
-
-    mysql_query(mysql, "CREATE TABLE IF NOT EXISTS user(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(30), last_path INT)");
-
-    strcat(stmt_select, name);
-    strcat(stmt_select, "'");
-
-    mysql_query(mysql,stmt_select);
-    printf("\n%s", stmt_select);
-    printf("\nRow affected%d",mysql_field_count(mysql));
 
     strcat(stmt_insert, name);
     strcat(stmt_insert, "')");
 
     mysql_query(mysql, stmt_insert);
 
-    if (!mysql_affected_rows(mysql)){
-        printf("\nInsert error");
+    if (!mysql_affected_rows(mysql)) {
+        finish_with_error(mysql);
         return 1;
     }
+    return 0;
+}
 
+
+int lookForUser(char *name, MYSQL *mysql){
+    char stmt_select[50] = "SELECT * FROM user WHERE name = '";
+
+    strcat(stmt_select, name);
+    strcat(stmt_select, "'");
+
+    if (mysql_query(mysql, stmt_select))
+    {
+        finish_with_error(mysql);
+    }
+
+    MYSQL_RES *result = mysql_store_result(mysql);
+    if (result == NULL)
+    {
+        finish_with_error(mysql);
+    }
+
+    // On sait ici s'il existe déjà ou pas
+    if(mysql_fetch_row(result)) {
+        // Cas user existe
+        mysql_free_result(result);
+        return 1;
+    } else {
+        mysql_free_result(result);
+        return 0;
+    }
+
+}
+
+int login(char *name, MYSQL *mysql){
+    if (lookForUser(name, mysql)){
+        printf("\nWelcome back %s!", name);
+        return 0;
+    } else {
+        // Crée un user
+        createUser(name, mysql);
+        printf("\nWelcome %s!", name);
+        return 1;
+    }
 
 }
 
@@ -135,12 +180,9 @@ int main(int argc, char ** argv){
 
     connectDatabase(mysql);
 
-
-    printf("\nHi, register first ?");
-    printf("\nHow do u want to be called ?");
+    printf("\nHi,how do u want to be called ?");
     inputString(username, 30);
-    printf("\nBienvenue %s !", username);
-    printf("\nConnexion...");
+    printf("\nLogging in...");
     login(username, mysql);
 
     while(ans != -1) {
