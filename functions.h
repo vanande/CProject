@@ -7,6 +7,13 @@
 #include <MYSQL/mysql.h>
 #include <curl/curl.h>
 
+struct Subject {
+    char *name;
+    int numOptions;
+    char *options[];
+};
+
+
 int connectDatabase(MYSQL *mysql);
 void disconnectDatabase(MYSQL * mysql);
 void getLastTweet(char name[]);
@@ -17,6 +24,10 @@ void finish_with_error(MYSQL *con);
 int createUser(char * name, MYSQL *mysql);
 int lookForUser(char *name, MYSQL *mysql);
 int login(char name[30], MYSQL *mysql);
+struct Subject *createSubject(char *name, int numOptions, char **options);
+void printSubject(struct Subject *subject);
+void addSubject(struct Subject ***subjects, int *numSubjects, char *name, int numOptions, char **options);
+void freeSubjects(struct Subject **subjects, int numSubjects);
 
 
 int connectDatabase(MYSQL *mysql){
@@ -156,4 +167,54 @@ int login(char *name, MYSQL *mysql){
         return 1;
     }
 
+}
+
+// Function to create and initialize a Subject struct
+struct Subject *createSubject(char *name, int numOptions, char **options) {
+    // Size of the Subject struct plus space for the options array
+    size_t size = sizeof(struct Subject) + numOptions * sizeof(char *);
+    // Dynamically allocate memory for the Subject struct
+    struct Subject *subject = malloc(size);
+    if (subject == NULL) {
+        // Error handling
+        fprintf(stderr, "Error allocating memory\n");
+        return NULL;
+    }
+    // Initialize the name field
+    subject->name = name;
+    // Initialize the numOptions field
+    subject->numOptions = numOptions;
+    // Initialize the options array
+    for (int i = 0; i < numOptions; i++) {
+        subject->options[i] = options[i];
+    }
+    return subject;
+}
+
+// Function to print a Subject struct and its options
+void printSubject(struct Subject *subject) {
+    printf("\n\n%s", subject->name);
+    for (int i = 0; i < subject->numOptions; i++) {
+        printf("\n%s", subject->options[i]);
+    }
+}
+
+// Function to create, initialize, and store a Subject struct in the subjects array
+void addSubject(struct Subject ***subjects, int *numSubjects, char *name, int numOptions, char **options) {
+    // Create and initialize the Subject struct
+    struct Subject *subject = createSubject(name, numOptions, options);
+    // Increase the size of the subjects array
+    *subjects = realloc(*subjects, (*numSubjects + 1) * sizeof(struct Subject *));
+    // Store the Subject struct in the subjects array
+    (*subjects)[*numSubjects] = subject;
+    // Increment the numSubjects variable
+    (*numSubjects)++;
+}
+
+// Function to free the memory for each Subject struct in the subjects array
+void freeSubjects(struct Subject **subjects, int numSubjects) {
+    for (int i = 0; i < numSubjects; i++) {
+        free(subjects[i]);
+    }
+    free(subjects);
 }
