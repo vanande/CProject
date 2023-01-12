@@ -35,10 +35,10 @@ int connectDatabase(MYSQL *mysql){
         printf("MySQL client version: %s\n", mysql_get_client_info());
         mysql_query(mysql, "CREATE DATABASE IF NOT EXISTS cProject");
         mysql_query(mysql, "USE cProject");
-        return 0;
-    } else {
-        printf("Erreur connexion a la BDD!");
         return 1;
+    } else {
+        printf("Error connecting to database!");
+        return 0;
     }
 }
 
