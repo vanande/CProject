@@ -21,10 +21,10 @@ Date:15/11/2021     Auteur:Vanande
 int main(int argc, char ** argv){
     int connected;
     int i = 0;
-    int path;
+    //int path;
     int ans = 0;
     int ansSubj = 0;
-    int algo;
+    //int algo;
     char username[30];
     struct Subject **subjects = malloc(sizeof(struct Subject*));
     struct Subject *subject;
