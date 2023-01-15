@@ -19,27 +19,28 @@ Date:15/11/2021     Auteur:Vanande
 
 
 int main(int argc, char ** argv){
-int connected = 0;
-int i = 0;
-int path;
-int ans = 0;
-int ansSubj = 0;
-int algo;
-char username[30];
-struct Subject **subjects = malloc(sizeof(struct Subject*));
-struct Subject *subject;
-int numSubjects = 0;
-char *options[2];
+    int connected;
+    int i = 0;
+    int path;
+    int ans = 0;
+    int ansSubj = 0;
+    int algo;
+    char username[30];
+    struct Subject **subjects = malloc(sizeof(struct Subject*));
+    struct Subject *subject;
+    int numSubjects = 0;
+    char *options[2];
+
 
 // Create and initialize the first Subject struct
 options[0] = "Should I leave my wife?";
 options[1] = "Should I stay single for the rest of my life?";
-addSubject(&subjects, &numSubjects, "Relationship advice", 2, options);
+addSubject(&subjects, &numSubjects, "relationship advice", 2, options);
 
 // Create and initialize the second Subject struct
 options[0] = "Should I invest in stocks?";
 options[1] = "Should I save my money in a bank?";
-addSubject(&subjects, &numSubjects, "Financial advice", 2, options);
+addSubject(&subjects, &numSubjects, "financial advice", 2, options);
 
 // Print the Subject structs
 //for (int i = 0; i < numSubjects; i++)
@@ -55,9 +56,9 @@ if (!connected) {
     i++;
     do{
         i++;
-        printf("\n1 ... Try again");
-        printf("\n2 ... Go offline");
-        printf("\n-1 ... Leave");
+        coolPrint("\n1 ... Try again", argv);
+        coolPrint("\n2 ... Go offline", argv);
+        coolPrint("\n-1 ... Leave", argv);
         scanf("%d",&ans);
         switch (ans) {
             case 1:
@@ -65,12 +66,12 @@ if (!connected) {
                 mysql = mysql_init(NULL);
                 connected = connectDatabase(mysql);
                 if (!connected){
-                    printf("\nTry again later...");
+                    coolPrint("\nTry again later...", argv);
                 }
                 break;
 
             case 2:
-                printf("\nData aren't saved in offline mode");
+                coolPrint("\nData aren't saved in offline mode", argv);
                 break;
             case -1:
                 printf("Bye !");
@@ -102,13 +103,13 @@ while(ans != -1) {
             scanf("%d", &ans);
             switch(ans){
                 case 1:
-                    funcUsed(&algo);
+                    funcUsed();
                     break;
                 case 2:
-                    funcUsed(&algo);
+                    funcUsed();
                     break;
                 case 3:
-                    funcUsed(&algo);
+                    funcUsed();
                     break;
                 default:
                     printf("\nYou answered %d, try again", ans);
@@ -122,13 +123,13 @@ while(ans != -1) {
             scanf("%d", &ans);
             switch(ans){
                 case 1:
-                    funcUsed(&algo);
+                    funcUsed();
                     break;
                 case 2:
-                    funcUsed(&algo);
+                    funcUsed();
                     break;
                 case 3:
-                    funcUsed(&algo);
+                    funcUsed();
                     break;
                 default:
                     printf("\nYou answered %d, try again", ans);
@@ -145,7 +146,7 @@ while(ans != -1) {
     }
     if (ans != -1){
         sleep(4);
-        printf("\n\nNeed anything else ?\n\n");
+        coolPrint("\n\nNeed anything else ?\n\n", argv);
         sleep(2);
     }
 }

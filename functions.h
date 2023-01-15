@@ -28,6 +28,8 @@ struct Subject *createSubject(char *name, int numOptions, char **options);
 void printSubject(struct Subject *subject);
 void addSubject(struct Subject ***subjects, int *numSubjects, char *name, int numOptions, char **options);
 void freeSubjects(struct Subject **subjects, int numSubjects);
+void coolPrint(char str[], char ** argv);
+
 
 
 int connectDatabase(MYSQL *mysql){
@@ -87,7 +89,6 @@ int funcUsed(){
     printf("\n2 ... Elon's tweet");
     scanf("%d", &algo);
     if (algo == 1){
-
         getAstrological("scorpion");
     }
     if (algo == 2){
@@ -110,6 +111,23 @@ void finish_with_error(MYSQL *con){
     exit(1);
 }
 
+void coolPrint(char str[], char ** argv){
+    int sleepTime;
+    for (int i = 0; i < strlen(str); i++){
+        if(str[i] == ' '){
+            printf("%c",str[i]);
+            if(argv[1] != NULL){
+                sleepTime = argv[1];
+                sleep(sleepTime);
+            } else {
+                Sleep(500);
+            }
+        } else {
+            printf("%c",str[i]);
+            Sleep(70);
+        }
+    }
+}
 
 int createUser(char * name, MYSQL *mysql){
     char stmt_insert[50] = "INSERT INTO user(name) VALUES ('";
