@@ -33,6 +33,10 @@ int main(int argc, char ** argv){
     char *options[2];
 
 
+
+
+
+
 // Create and initialize the first Subject struct
 options[0] = "Should I leave my wife?";
 options[1] = "Should I stay single for the rest of my life?";
@@ -119,8 +123,8 @@ while(ans != -1) {
             break;
         case 2: // Need financial advice
             printf("\nCan you be more precise");
-            for (i = 0; i < subjects[ansSubj]->numOptions; i++) //
-                printf("\n%d ... %s", i, subjects[ansSubj-1]->options[i]);
+            for (i = 0; i < subjects[ansSubj-1]->numOptions; i++)
+                printf("\n%d ... %s", i+1, subjects[ansSubj-1]->options[i]);
             scanf("%d", &ans);
             switch(ans){
                 case 1:

@@ -39,6 +39,10 @@ cJSON * sendRequest(char * url);
 char* getTweetText(char *);
 char* getIdFromName(char *name);
 
+char* getHoroscope(char *astrological);
+cJSON* sendPostRequest(char *url, char * postfields);
+
+
 
 
 int connectDatabase(MYSQL *mysql){
@@ -87,14 +91,16 @@ void getLastTweet(char tweet_user[30]){
 }
 
 void getAstrological(char astrological[30]){
-    printf("\nIn GetAstrological");
-
     int a;
+    char horoscope[255];
     srand(time(NULL));
     a = rand()%2;
+    // Getting horoscope
+    strcpy(horoscope,getHoroscope(astrological));
     printf("\nGetting the great %s opinion", astrological);
     sleep(2);
     printf("\nHere is what %s says ", astrological);
+    printf("\n%s", horoscope);
     printf("\nGetting the answer to your universal question...");
     sleep(2);
     if (!a)
@@ -108,28 +114,78 @@ int funcUsed(){
     int i;
     char astro[30];
     char tweet_user[30];
+    char tweet_example[6][100];
+    char signs[12][20];
+    int chosenSigns;
+
 
     printf("\nWhere to look for your answer?");
     printf("\n1 ... My astrological");
     printf("\n2 ... From Twitter");
     scanf("%d", &algo);
-    if (algo == 1){
-        printf("\nWhat is your astrological ?");
-        scanf("%s", &astro);
-        getAstrological(astro);
-    }
-    if (algo == 2){
-        printf("Good choice! What's the account of your prophet? (start with @)");
-        scanf("%s", &tweet_user);
-        if (tweet_user[0] == '@'){
-            for (i = 0; i < strlen(tweet_user); i++){
-                tweet_user[i] = tweet_user[i+1];
+    switch(algo){
+        case 1:
+
+            //printf("\nHere is a list of all signs - aries, taurus, gemini, cancer, leo, virgo, libra, scorpio, sagittarius, capricorn, aquarius and pisces.");
+            printf("\nWhat is your sign ?\n");
+            strcpy(signs[0],"Aries");
+            strcpy(signs[1],"Taurus");
+            strcpy(signs[2],"Gemini");
+            strcpy(signs[3],"Cancer");
+            strcpy(signs[4],"Leo");
+            strcpy(signs[5],"Virgo");
+            strcpy(signs[6],"Libra");
+            strcpy(signs[7],"Scorpio");
+            strcpy(signs[8],"Sagittarius");
+            strcpy(signs[9],"Capricorn");
+            strcpy(signs[10],"Aquarius");
+            strcpy(signs[11],"Pisces");
+
+            for (i = 0; i < 12; i++){
+                printf("%d ... ", i+1);
+                printf(signs[i]);
+                printf("\n");
             }
-        }
+            scanf("%d", &chosenSigns);
 
-        getLastTweet(tweet_user);
+            strcpy(astro,signs[chosenSigns-1]);
+                getAstrological(astro);
 
+            break;
+        case 2:
+                // Init the tweet_example with raw text
+                strcpy(tweet_example[0], "Elon Musk : @elonmusk");
+                strcpy(tweet_example[1], "Bill Gates : @BillGates");
+                strcpy(tweet_example[2], "Emmanuel Macron : @EmmanuelMacron");
+                strcpy(tweet_example[3], "LeBron James : @KingJames");
+                strcpy(tweet_example[4], "Barack Obama : @BarackObama");
+                strcpy(tweet_example[5], "IDF Mobilites : @IDFmobilites");
+
+
+                printf("Good choice! What's the account of your prophet? (start with @)");
+                printf("\nSome ideas...\n");
+                for (i = 0; i < 6; i++){
+                    printf("\n");
+                    printf(tweet_example[i]);
+                }
+                printf("\nAnswer : ");
+                //printf("%s", tweet_user[i][0]);
+
+                scanf("%s", &tweet_user);
+                if (tweet_user[0] == '@'){
+                    for (i = 0; i < strlen(tweet_user); i++){
+                        tweet_user[i] = tweet_user[i+1];
+                    }
+                }
+
+                getLastTweet(tweet_user);
+
+            break;
+        default:
+            printf("\nDon't need advice ? Ok");
     }
+
+
 }
 void inputString(char* string, int size){
     fgets(string, size, stdin);
@@ -391,7 +447,7 @@ char* getLastTweetID(char *user_name){
         printf("\nError the data item is not an object");
     last_tweet = cJSON_GetObjectItemCaseSensitive(meta,"newest_id");
     if (!cJSON_IsString(last_tweet)){
-        printf("\nThat user either does not exist or hasn't tweet anything");
+        printf("\nThat user either does not exist or hasn't tweet anything for a long time");
     }
 
     free(url);
@@ -432,4 +488,80 @@ char* getTweetText(char *tweet_id){
     free(url);
     //  cJSON_Delete(id);
     return text->valuestring;
+}
+
+
+cJSON* sendPostRequest(char *url, char * postfields){
+    CURL *curl;
+    char response[256000] = {0};
+    CURLcode res;
+    cJSON * json = NULL;
+
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    curl = curl_easy_init();
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "sign=aries&day=today");
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+
+        res = curl_easy_perform(curl);
+        if (res != CURLE_OK) {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+        }
+
+        // Print the response JSON
+        json = cJSON_Parse(response);
+        if (cJSON_IsNull(json))
+            printf("\n Error in parsing");
+        //char *string = cJSON_Print(json);
+        //printf("\nJSON in the func %s", string);
+
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
+        return json;
+    }
+}
+
+char* getHoroscope(char *astrological){
+    char * url;
+    char *endpoint = "https://aztro.sameerkumar.website/?";
+    char *day = "day=today";
+    char *sign;
+    char * postFields;
+    cJSON * json;
+    cJSON * description;
+
+    // Allocating sign
+    sign = malloc((strlen("&sign=") + strlen(astrological) ) * sizeof(char));
+    strcpy(sign, "&sign=");
+    strcat(sign,astrological);
+
+    // Allocating postFields
+    postFields = malloc ( ( strlen(sign) + strlen(day) ) * sizeof(char) );
+    strcpy(postFields, day);
+    strcat(postFields, sign);
+
+    // Setting url
+    url = malloc((strlen(endpoint) + strlen(postFields)) * sizeof(char));
+
+    strcpy(url,endpoint);
+    strcat(url,postFields);
+
+    //printf("Here is url : %s", url);
+
+    // Sending request
+    json = sendPostRequest(url, postFields);
+    if(cJSON_IsNull(json)){
+        printf("sendPostRequest JSON is NULL");
+        return 0;
+    }
+
+    // Get content
+    description = cJSON_GetObjectItemCaseSensitive(json, "description");
+    if (!cJSON_IsString(description))
+        printf("Error the description item is not an string");
+    return description->valuestring != NULL?description->valuestring:0;
 }
