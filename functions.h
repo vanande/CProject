@@ -1,3 +1,5 @@
+#define BEARER_TOKEN "AAAAAAAAAAAAAAAAAAAAAGPvlAEAAAAA1o0fe4FSGXB89i5N%2FT8ZWKKBI%2BU%3DonZOaCBeDMgXahH8aiX2LyGwN4lXmn2SdNZ6eWrmFrBrd2WM4e"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +8,7 @@
 #include <winsock.h>
 #include <MYSQL/mysql.h>
 #include <curl/curl.h>
+#include "cJSON.h"
 
 struct Subject {
     char *name;
@@ -30,6 +33,11 @@ void addSubject(struct Subject ***subjects, int *numSubjects, char *name, int nu
 void freeSubjects(struct Subject **subjects, int numSubjects);
 void coolPrint(char str[], char ** argv);
 
+unsigned int write_callback(char *ptr, unsigned int size, unsigned int number_members, void *userdata);
+char* getLastTweetID(char *);
+cJSON * sendRequest(char * url);
+char* getTweetText(char *);
+char* getIdFromName(char *name);
 
 
 
@@ -49,21 +57,33 @@ void disconnectDatabase(MYSQL * mysql){
     mysql_close(mysql);
 }
 
-void getLastTweet(char name[30]){
-    printf("\nIn GetLastTweet");
-
+void getLastTweet(char tweet_user[30]){
     int a;
+    char tweet_id[30];
+    char tweet_text[255];
     srand(time(NULL));
     a = rand()%2;
-    printf("\nGetting %s's last tweet", name);
+
+    // Getting last tweet ID
+
+    if (!getLastTweetID(tweet_user))
+        return;
+
+    strcpy(tweet_id,getLastTweetID(tweet_user));
+    //printf("Here is user last tweet ID : %s", tweet_id);
+    printf("\nGot the tweet!");
+    printf("\nReading it...");
     sleep(2);
-    printf("\nHere is %s's last Tweet: ", name);
+
+    // Print the last tweet
+    strcpy(tweet_text, getTweetText(tweet_id));
+    printf("\nHere is %s last tweet : %s\n",tweet_user, tweet_text);
     printf("\nGetting the answer to your universal question...");
     sleep(2);
     if (!a)
-        printf("\nYou definitely should do it according to %s",name);
+        printf("\nYou definitely should do it according to %s",tweet_user);
     else
-        printf("\nYou definitely shouldn't do it according to %s",name);
+        printf("\nYou definitely shouldn't do it according to %s",tweet_user);
 }
 
 void getAstrological(char astrological[30]){
@@ -85,15 +105,29 @@ void getAstrological(char astrological[30]){
 
 int funcUsed(){
     int algo;
+    int i;
+    char astro[30];
+    char tweet_user[30];
+
     printf("\nWhere to look for your answer?");
     printf("\n1 ... My astrological");
-    printf("\n2 ... Elon's tweet");
+    printf("\n2 ... From Twitter");
     scanf("%d", &algo);
     if (algo == 1){
-        getAstrological("scorpion");
+        printf("\nWhat is your astrological ?");
+        scanf("%s", &astro);
+        getAstrological(astro);
     }
     if (algo == 2){
-        getLastTweet("elon");
+        printf("Good choice! What's the account of your prophet? (start with @)");
+        scanf("%s", &tweet_user);
+        if (tweet_user[0] == '@'){
+            for (i = 0; i < strlen(tweet_user); i++){
+                tweet_user[i] = tweet_user[i+1];
+            }
+        }
+
+        getLastTweet(tweet_user);
 
     }
 }
@@ -236,4 +270,166 @@ void freeSubjects(struct Subject **subjects, int numSubjects) {
         free(subjects[i]);
     }
     free(subjects);
+}
+
+
+unsigned int write_callback(char *ptr, unsigned int size, unsigned int number_members, void *userdata) {
+    // Append the received data to the string
+    char *response = (char *)userdata;
+    unsigned int realsize = size * number_members;
+    memcpy(response + strlen(response), ptr, realsize);
+    response[realsize + strlen(response)] = 0;
+    return realsize;
+}
+
+
+// Take url return json
+cJSON * sendRequest(char * url){
+    CURL *curl;
+    char response[256000] = {0};
+    CURLcode res;
+    cJSON * json = NULL;
+
+    curl = curl_easy_init();
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, "Authorization: Bearer " BEARER_TOKEN);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+
+        res = curl_easy_perform(curl);
+        if (res != CURLE_OK) {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+        }
+
+        // Print the response JSON
+        json = cJSON_Parse(response);
+        if (cJSON_IsNull(json))
+            printf("\n Error in parsing");
+        //char *string = cJSON_Print(json);
+        //printf("\nJSON in the func %s", string);
+
+        curl_easy_cleanup(curl);
+        return json;
+    } else {
+        return NULL;
+    }
+}
+
+//Take name return id
+char* getIdFromName(char *name){
+    CURL *curl;
+    char response[4096];
+    CURLcode res;
+    cJSON * json = NULL;
+    cJSON * data = NULL;
+    cJSON * id = NULL;
+    int user_id = 0;
+    char *url;
+    const char endpoint[] = "https://api.twitter.com/2/users/by/username/";
+
+    // Create the URL
+    url = malloc((strlen(name) + strlen(endpoint)) * sizeof(char*));
+    strcpy(url, "https://api.twitter.com/2/users/by/username/");
+    strcat(url,name);
+    if (url[strlen(url)-1] == '\n')
+        url[strlen(url)-1] = '\0';
+
+    // Send the request
+    json = sendRequest(url);
+    if (cJSON_IsNull(json))
+        printf("\nThe JSON is NULL");
+    // Print the response JSON
+    //char *string = cJSON_Print(json);
+    //printf("\nJSON I got %s\n", string);
+
+
+    // Get content
+    data = cJSON_GetObjectItemCaseSensitive(json, "data");
+    if (!cJSON_IsObject(data))
+        printf("Error the data item is not an object");
+    id = cJSON_GetObjectItemCaseSensitive(data,"id");
+    if (!cJSON_IsString(id))
+        printf("Error data.id is not a string");
+
+    user_id = atoi(id->valuestring);
+
+    free(url);
+    //  cJSON_Delete(id);
+    return id->valuestring;
+}
+
+char* getLastTweetID(char *user_name){
+    cJSON * json;
+    cJSON * meta;
+    cJSON * last_tweet;
+    char *url;
+    const char endpoint[] = "https://api.twitter.com/2/tweets/search/recent?query=from:";
+
+    // Create the URL
+    url = malloc((strlen(user_name) + strlen(endpoint)) * sizeof(char*));
+    strcpy(url, endpoint);
+    strcat(url,user_name);
+    if (url[strlen(url)-1] == '\n')
+        url[strlen(url)-1] = '\0';
+
+    // Send the request
+    json = sendRequest(url);
+    if (cJSON_IsNull(json))
+        printf("\nThe JSON is NULL");
+    // Print the response JSON
+    //char *string = cJSON_Print(json);
+    //printf("\nJSON I got %s\n", string);
+
+    // Get content
+    meta = cJSON_GetObjectItemCaseSensitive(json, "meta");
+    if (!cJSON_IsObject(meta))
+        printf("\nError the data item is not an object");
+    last_tweet = cJSON_GetObjectItemCaseSensitive(meta,"newest_id");
+    if (!cJSON_IsString(last_tweet)){
+        printf("\nThat user either does not exist or hasn't tweet anything");
+    }
+
+    free(url);
+    //  cJSON_Delete(id);
+    return cJSON_IsString(last_tweet)?last_tweet->valuestring:0;
+}
+
+char* getTweetText(char *tweet_id){
+    cJSON * json;
+    cJSON * data;
+    cJSON * text;
+    char *url;
+    const char endpoint[] = "https://api.twitter.com/2/tweets/";
+
+    // Create the URL
+    url = malloc((strlen(tweet_id) + strlen(endpoint)) * sizeof(char*));
+    strcpy(url, endpoint);
+    strcat(url,tweet_id);
+    if (url[strlen(url)-1] == '\n')
+        url[strlen(url)-1] = '\0';
+
+    // Send the request
+    json = sendRequest(url);
+    if (cJSON_IsNull(json))
+        printf("\nThe JSON is NULL");
+    // Print the response JSON
+    //char *string = cJSON_Print(json);
+    //printf("\nJSON I got %s\n", string);
+
+    // Get content
+    data = cJSON_GetObjectItemCaseSensitive(json, "data");
+    if (!cJSON_IsObject(data))
+        printf("Error the data item is not an object");
+    text = cJSON_GetObjectItemCaseSensitive(data,"text");
+    if (!cJSON_IsString(text))
+        printf("Error data.text is not a string");
+
+    free(url);
+    //  cJSON_Delete(id);
+    return text->valuestring;
 }

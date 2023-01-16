@@ -15,7 +15,7 @@ Date:15/11/2021     Auteur:Vanande
 #include <winsock.h>
 #include <MYSQL/mysql.h>
 #include <curl/curl.h>
-#include "cJSON.h"
+//#include "cJSON.h"
 #include "functions.h"
 
 
