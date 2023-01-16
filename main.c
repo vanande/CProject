@@ -15,6 +15,7 @@ Date:15/11/2021     Auteur:Vanande
 #include <winsock.h>
 #include <MYSQL/mysql.h>
 #include <curl/curl.h>
+#include "cJSON.h"
 #include "functions.h"
 
 
@@ -98,7 +99,7 @@ while(ans != -1) {
         case 1: // Need relationship advice
             printf("\nCan you be more precise");
             for (i = 0; i < subjects[ansSubj]->numOptions; i++) //
-                printf("\n%d ... %s", i, subjects[ansSubj-1]->options[i]);
+                printf("\n%d ... %s", i+1, subjects[ansSubj-1]->options[i]);
 
             scanf("%d", &ans);
             switch(ans){

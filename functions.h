@@ -32,6 +32,7 @@ void coolPrint(char str[], char ** argv);
 
 
 
+
 int connectDatabase(MYSQL *mysql){
     if (mysql_real_connect(mysql, "localhost", "root", "", NULL, 3307, NULL, 0)) {
         printf("MySQL client version: %s\n", mysql_get_client_info());

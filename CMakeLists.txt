@@ -12,8 +12,7 @@ include_directories(curl/include)
 link_directories("curl/lib")
 link_libraries(CURL)
 
-
-add_executable(Nostra main.c)
+add_executable(Nostra main.c cJSON.h cJSON.c)
 
 target_link_libraries(Nostra libmysql)
 target_link_libraries(Nostra CURL)
