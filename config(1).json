@@ -1,0 +1,99 @@
+{
+  "subjects": [
+    {
+      "name": "relationship advice",
+      "numOptions": 4,
+      "options": [
+        "Should I leave my wife?",
+        "Should I stay single for the rest of my life?",
+        "Should I invest in real estate?",
+        "Should I seek professional financial advice?"
+      ]
+    },
+    {
+      "name": "financial advice",
+      "numOptions": 4,
+      "options": [
+        "Should I invest in stocks?",
+        "Should I save my money in a bank?",
+        "Should I invest in real estate?",
+        "Should I seek professional financial advice?"
+
+      ]
+    },
+    {
+      "name": "career advice",
+      "numOptions": 4,
+      "options": [
+        "Should I take a job offer in another city?",
+        "Should I stay in my current job and try to get a promotion?",
+        "Should I start my own business?",
+        "Should I take a sabbatical from work?"
+      ]
+    },
+    {
+      "name": "health advice",
+      "numOptions": 5,
+      "options": [
+        "Should I try a new diet?",
+        "Should I start exercising?",
+        "Should I consult a doctor?",
+        "Should I try alternative medicine?",
+        "Should I get a second opinion from another doctor?"
+      ]
+    },
+    {
+      "name": "education advice",
+      "numOptions": 4,
+      "options": [
+        "Should I go back to school to get a higher degree?",
+        "Should I take online courses to improve my skills?",
+        "Should I take a gap year to explore different career options?",
+        "Should I pursue a certification in a specific field?"
+      ]
+    },
+    {
+      "name": "travel advice",
+      "numOptions": 4,
+      "options": [
+        "Should I plan a trip abroad?",
+        "Should I take a road trip within the country?",
+        "Should I plan a trip with a group tour?",
+        "Should I volunteer abroad?"
+      ]
+    },
+    {
+      "name": "career change advice",
+      "numOptions": 4,
+      "options": [
+        "Should I switch to a different field?",
+        "Should I take a lower-paying job with more growth potential?",
+        "Should I start my own business?",
+        "Should I go back to school to retrain for a new career?"
+      ]
+    },
+    {
+      "name": "personal development advice",
+      "numOptions": 5,
+      "options": [
+        "Should I focus on building my self-confidence?",
+        "Should I work on developing my leadership skills?",
+        "Should I take a course on public speaking?",
+        "Should I focus on building my networking skills?",
+        "Should I focus on building my time management skills?"
+      ]
+    },
+    {
+      "name": "family advice",
+      "numOptions": 6,
+      "options": [
+        "Should I start a family?",
+        "Should I have more children?",
+        "Should I move to a new city to be closer to family?",
+        "Should I try to repair a strained relationship with a family member?",
+        "Should I seek counseling to help resolve family conflicts?",
+        "Should I consider adoption?"
+      ]
+    }
+  ]
+}

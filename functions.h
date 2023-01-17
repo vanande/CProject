@@ -57,7 +57,7 @@ struct SubjectData initSubjects();
 
 int connectDatabase(MYSQL *mysql){
     if (mysql_real_connect(mysql, "localhost", "root", "", NULL, 3307, NULL, 0)) {
-        printf("MySQL client version: %s\n", mysql_get_client_info());
+        //printf("MySQL client version: %s\n", mysql_get_client_info());
         if (mysql_query(mysql, "CREATE DATABASE IF NOT EXISTS cProject")){
             finish_with_error(mysql);
         }
@@ -168,6 +168,7 @@ int funcUsed(char * username, int path){
     mysql_options(mysql, MYSQL_READ_DEFAULT_GROUP, "option");
     int connected = connectDatabase(mysql);
     char stmt[150];
+    char stmt_update[150];
 
 
 
@@ -183,6 +184,12 @@ int funcUsed(char * username, int path){
             if (mysql_query(mysql, stmt)){
                 finish_with_error(mysql);
             }
+
+            sprintf(stmt_update, "UPDATE user SET last_path = '%d' WHERE name = '%s'", path, username);
+            if (mysql_query(mysql, stmt_update)){
+                finish_with_error(mysql);
+            }
+
             //printf("\nHere is a list of all signs - aries, taurus, gemini, cancer, leo, virgo, libra, scorpio, sagittarius, capricorn, aquarius and pisces.");
             printf("\nWhat is your sign ?\n");
             strcpy(signs[0],"Aries");
@@ -221,11 +228,15 @@ int funcUsed(char * username, int path){
             path *= 10;
             path += 2;
             sprintf(stmt, "INSERT INTO path (path_code, number_of_times) VALUES ('%d', 1) ON DUPLICATE KEY UPDATE number_of_times = number_of_times + 1", path);
-
             if (mysql_query(mysql, stmt)){
                 finish_with_error(mysql);
             }
-                // Init the tweet_example with raw text
+            sprintf(stmt_update, "UPDATE user SET last_path = '%d' WHERE name = '%s'", path, username);
+            if (mysql_query(mysql, stmt_update)){
+                finish_with_error(mysql);
+            }
+
+            // Init the tweet_example with raw text
                 strcpy(tweet_example[0], "Elon Musk : @elonmusk");
                 strcpy(tweet_example[1], "Bill Gates : @BillGates");
                 strcpy(tweet_example[2], "Emmanuel Macron : @EmmanuelMacron");
@@ -697,7 +708,7 @@ struct SubjectData initSubjects() {
         // Add the Subject struct to the subjects array
         addSubject(&data, subject->name, subject->numOptions, subject->options);
     }
-    printf("\nJSON loaded successfully\n");
+    //printf("\nJSON loaded successfully\n");
     return data;
 }
 

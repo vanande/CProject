@@ -159,6 +159,18 @@ int main(int argc, char ** argv) {
     int subject_options;
     char options_string[100];
     char subject_string[100];
+    char greetings_string[100];
+    int intel_choice;
+    cJSON * json_delivery = loadJSON();
+    char * string_delivery;
+    char new_subject_name[30];
+    int new_num_options;
+    char **new_options;
+    char subject_to_delete[30];
+    cJSON *root;
+    cJSON *subjects_array;
+    char * new_json_string;
+    FILE * config_file;
     char *voice_strings[] = {
             "with a worried voice",
             "with a defeated voice",
@@ -175,18 +187,17 @@ int main(int argc, char ** argv) {
 
     // Enter the room
     if (rand() % 2 == 0) {
-        coolPrint("\nGreetings, Master. It is an honor to meet you.", atoi(argv[1]));
-    } else {
-        printf("\nGood morning/afternoon/evening, Master. It is a pleasure to make your acquaintance.");
-    }
+        sprintf(greetings_string, "Greetings, Master %s. It is an honor to meet you.", username);
+        coolPrint(greetings_string, atoi(argv[1]));
+    }else
+        printf("\nGood morning, Master %s. It is a pleasure to make your acquaintance.", username);
 
     // Doing stuff
-    int userInput;
-    printf("\n1... Show my slaves");
-    printf("\n2... What are their trouble ?");
-    printf("\n-1... Leave");
-
     while(secret_action != -1) {
+        printf("\n1... Show my slaves");
+        printf("\n2... What are their trouble ?");
+        printf("\n3... Let's talk about intel");
+        printf("\n-1... Leave");
         do {
             printf("\nAnswer : ");
             inputCheck = scanf("%d", &secret_action);
@@ -196,7 +207,7 @@ int main(int argc, char ** argv) {
                 printf("\nPlease master enter a valid number.");
                 scanf("%*[^\n]"); // Used to clear false input. Avoid infinite loop.
             }
-        } while (secret_action < 1 || secret_action > 2 || inputCheck != 1);
+        } while (secret_action < 1 || secret_action > 3 || inputCheck != 1);
 
 
         switch (secret_action) {
@@ -252,11 +263,106 @@ int main(int argc, char ** argv) {
                 }
                 mysql_free_result(result);
                 break;
+            case 3:
+                printf("\nThat's some serious business...");
+                printf("\n1 ... Show me intel");
+                printf("\n2 ... Add some");
+                printf("\n3 ... Delete that part");
+                printf("\n-1 ... Enough, I've got headache");
+                do {
+                    printf("\nAnswer : ");
+                    inputCheck = scanf("%d", &intel_choice);
+                    if (intel_choice == -1)
+                        goto LeaveTheRoom;;
+                    if (inputCheck != 1) {
+                        printf("\nPlease master enter a valid number.");
+                        scanf("%*[^\n]"); // Used to clear false input. Avoid infinite loop.
+                    }
+                } while (intel_choice < 1 || intel_choice > 4 || inputCheck != 1);
+                switch (intel_choice) {
+                    case 1:
+                        string_delivery = cJSON_Print(json_delivery);
+                        printf("\nHere is what you asked for : \n%s", string_delivery);
+                        break;
+                    case 2:
+                        printf("\nType the name of the new subject\n");
+                        scanf("%s", new_subject_name);
+                        printf("\nType the number of options\n");
+                        inputCheck = scanf("%d", &new_num_options);
+                        if (inputCheck != 1){
+                            printf("\nDon't you know what a number is ?");
+                            goto LeaveTheRoom;
+                        }
+                        if (new_num_options < 0 || new_num_options > 5){
+                            printf("\nDon't want to work anymore");
+                            goto end;
+                        }
+                        new_options = malloc(new_num_options * sizeof(char *));
+                        for (i = 0; i < new_num_options; i++){
+                            new_options[i] = malloc(150 * sizeof(char));
+                            if (new_options[i] == NULL){
+                                printf("\nError in the malloc");
+                                return 1;
+                            }
+
+                            printf("\nType options %d\n", i);
+                            scanf("%s", new_options[i]);
+                        }
+                        string_delivery = cJSON_Print(json_delivery);
+                        root = cJSON_Parse(string_delivery);
+                        subjects_array = cJSON_GetObjectItemCaseSensitive(root, "subjects");
+
+                        cJSON *new_subject = cJSON_CreateObject();
+                        cJSON_AddStringToObject(new_subject, "name", new_subject_name);
+                        cJSON_AddNumberToObject(new_subject, "numOptions", new_num_options);
+                        cJSON *options_array = cJSON_CreateArray();
+                        for (int i = 0; i < new_num_options; i++) {
+                            cJSON_AddItemToArray(options_array, cJSON_CreateString(new_options[i]));
+                        }
+                        cJSON_AddItemToObject(new_subject, "options", options_array);
+                        cJSON_AddItemToArray(subjects_array, new_subject);
+
+                        //new_json_string = malloc(3000 * sizeof(char ));
+                        new_json_string = cJSON_Print(root);
+                        printf("Here is the new JSON %s", new_json_string);
+
+                        config_file = fopen("../config.json", "w");
+                        fprintf(config_file, "%s", new_json_string);
+                        fclose(config_file);
+                        break;
+                    case 3:
+                        printf("\nType the name of the subject to delete\n");
+                        scanf("%s", subject_to_delete);
+
+                        string_delivery = cJSON_Print(json_delivery);
+                        root = cJSON_Parse(string_delivery);
+                        subjects_array = cJSON_GetObjectItemCaseSensitive(root, "subjects");
+
+                        for (i = 0; i < cJSON_GetArraySize(subjects_array); i++) {
+                            cJSON *subject_to_delete_JSON = cJSON_GetArrayItem(subjects_array, i);
+                            if (strcmp(cJSON_GetObjectItemCaseSensitive(subject_to_delete_JSON, "name")->valuestring, subject_to_delete) == 0) {
+                                cJSON_DeleteItemFromArray(subjects_array, i);
+                                break;
+                            }
+                        }
+
+                        //new_json_string = malloc(3000 * sizeof(char ));
+                        new_json_string = cJSON_Print(root);
+                        printf("Here is the new JSON with deleted subject %s", new_json_string);
+
+                        config_file = fopen("../config.json", "w");
+                        fprintf(config_file, "%s", new_json_string);
+                        fclose(config_file);
+
+
+                        break;
+                }
+                break;
 
             case -1:
-                break;
+                goto LeaveTheRoom;
             default:
-                printf("Invalid input\n");
+                printf("\nPlease master, don't test me");
                 break;
         }
     }
