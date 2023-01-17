@@ -25,17 +25,20 @@ int connectDatabase(MYSQL *mysql);
 void disconnectDatabase(MYSQL * mysql);
 void getLastTweet(char name[]);
 void getAstrological(char astrological[30]);
-int funcUsed();
+int funcUsed(char * username, int path);
 void inputString(char* string, int size);
 void finish_with_error(MYSQL *con);
 int createUser(char * name, MYSQL *mysql);
 int lookForUser(char *name, MYSQL *mysql);
 int login(char name[30], MYSQL *mysql);
+int insertData(MYSQL *mysql);
 struct Subject *createSubject(char *name, int numOptions, char **options);
 void printSubject(struct Subject *subject);
 void addSubject(struct SubjectData *data, char *name, int numOptions, char **options);
 void freeSubjects(struct Subject **subjects, int numSubjects);
-void coolPrint(char str[], OPTIONAL int argv);
+cJSON *loadJSON();
+struct SubjectData initSubjects();
+void coolPrint(char str[], int argv);
 
 unsigned int write_callback(char *ptr, unsigned int size, unsigned int number_members, void *userdata);
 char* getLastTweetID(char *);
@@ -46,18 +49,52 @@ char* getIdFromName(char *name);
 char* getHoroscope(char *astrological);
 cJSON* sendPostRequest(char *url, char * postfields);
 
+cJSON *loadJSON();
+struct SubjectData initSubjects();
+
 
 
 
 int connectDatabase(MYSQL *mysql){
     if (mysql_real_connect(mysql, "localhost", "root", "", NULL, 3307, NULL, 0)) {
         printf("MySQL client version: %s\n", mysql_get_client_info());
-        mysql_query(mysql, "CREATE DATABASE IF NOT EXISTS cProject");
-        mysql_query(mysql, "USE cProject");
+        if (mysql_query(mysql, "CREATE DATABASE IF NOT EXISTS cProject")){
+            finish_with_error(mysql);
+        }
+        if (mysql_query(mysql, "USE cProject")){
+            finish_with_error(mysql);
+        }
+        if (mysql_query(mysql, "CREATE TABLE IF NOT EXISTS path (path_code VARCHAR(10) PRIMARY KEY, number_of_times INT)")){
+            finish_with_error(mysql);
+        }
+        // Inserting some data
+        insertData(mysql);
         return 1;
     } else {
         printf("Error connecting to database!");
         return 0;
+    }
+}
+int insertData(MYSQL *mysql){
+    srand(time(NULL));
+    char stmt_insert[150];
+    int path_code;
+    int subject_index;
+    struct SubjectData subjectsData = initSubjects();
+    struct Subject **subjects = subjectsData.subjects;
+    int numSubjects = subjectsData.numSubjects;
+
+    for (int i = 0; i < 100; ++i) {
+        path_code = 0;
+        path_code = subject_index = rand()%numSubjects;
+        path_code *= 10;
+        path_code += rand()%subjects[subject_index]->numOptions;
+        path_code *= 10;
+        path_code += rand()%2;
+        sprintf(stmt_insert, "INSERT INTO path (path_code, number_of_times) VALUES ('%d', 1) ON DUPLICATE KEY UPDATE number_of_times = number_of_times + 1", path_code);
+        if (mysql_query(mysql, stmt_insert)) {
+            finish_with_error(mysql);
+        }
     }
 }
 
@@ -117,7 +154,7 @@ void getAstrological(char astrological[30]){
     printf("\n\n\n\n\n");
 }
 
-int funcUsed(){
+int funcUsed(char * username, int path){
     int algo;
     int i;
     char astro[30];
@@ -126,6 +163,12 @@ int funcUsed(){
     char signs[12][20];
     int chosenSigns=0;
     int inputCheck;
+    MYSQL *mysql;
+    mysql = mysql_init(NULL);
+    mysql_options(mysql, MYSQL_READ_DEFAULT_GROUP, "option");
+    int connected = connectDatabase(mysql);
+    char stmt[150];
+
 
 
     printf("\nWhere to look for your answer?");
@@ -134,7 +177,12 @@ int funcUsed(){
     scanf("%d", &algo);
     switch(algo){
         case 1:
-
+            path *= 10;
+            path += 1;
+            sprintf(stmt, "INSERT INTO path (path_code, number_of_times) VALUES ('%d', 1) ON DUPLICATE KEY UPDATE number_of_times = number_of_times + 1", path);
+            if (mysql_query(mysql, stmt)){
+                finish_with_error(mysql);
+            }
             //printf("\nHere is a list of all signs - aries, taurus, gemini, cancer, leo, virgo, libra, scorpio, sagittarius, capricorn, aquarius and pisces.");
             printf("\nWhat is your sign ?\n");
             strcpy(signs[0],"Aries");
@@ -170,6 +218,13 @@ int funcUsed(){
             sleep(10);
             break;
         case 2:
+            path *= 10;
+            path += 2;
+            sprintf(stmt, "INSERT INTO path (path_code, number_of_times) VALUES ('%d', 1) ON DUPLICATE KEY UPDATE number_of_times = number_of_times + 1", path);
+
+            if (mysql_query(mysql, stmt)){
+                finish_with_error(mysql);
+            }
                 // Init the tweet_example with raw text
                 strcpy(tweet_example[0], "Elon Musk : @elonmusk");
                 strcpy(tweet_example[1], "Bill Gates : @BillGates");
@@ -213,7 +268,6 @@ void inputString(char* string, int size){
         fflush(stdin);
 }
 
-
 void finish_with_error(MYSQL *con){
     fprintf(stderr, "%s\n", mysql_error(con));
     mysql_close(con);
@@ -227,9 +281,9 @@ void coolPrint(char str[], OPTIONAL int argv){
             printf("%c",str[i]);
             if(argv != NULL){
                 sleepTime = argv;
-                sleep(sleepTime);
+                Sleep(sleepTime);
             } else {
-                Sleep(500);
+                Sleep(200);
             }
         } else {
             printf("%c",str[i]);
@@ -260,14 +314,12 @@ int lookForUser(char *name, MYSQL *mysql){
     strcat(stmt_select, name);
     strcat(stmt_select, "'");
 
-    if (mysql_query(mysql, stmt_select))
-    {
+    if (mysql_query(mysql, stmt_select)){
         finish_with_error(mysql);
     }
 
     MYSQL_RES *result = mysql_store_result(mysql);
-    if (result == NULL)
-    {
+    if (result == NULL){
         finish_with_error(mysql);
     }
 
@@ -609,4 +661,68 @@ char* getHoroscope(char *astrological){
     if (!cJSON_IsString(description))
         printf("Error the description item is not an string");
     return description->valuestring != NULL?description->valuestring:0;
+}
+
+struct SubjectData initSubjects() {
+    cJSON *json = loadJSON();
+    struct SubjectData data;
+    data.subjects = NULL;
+    data.numSubjects = 0;
+
+    cJSON *subjectsJSON = cJSON_GetObjectItemCaseSensitive(json, "subjects");
+    int numSubjectsJSON = cJSON_GetArraySize(subjectsJSON);
+
+    //printf("\nThere is %d subjects", numSubjectsJSON);
+
+    // Iterate through the subjects array and extract the data
+    for (int i = 0; i < numSubjectsJSON; i++) {
+        cJSON *subjectJSON = cJSON_GetArrayItem(subjectsJSON, i);
+        cJSON *nameJSON = cJSON_GetObjectItemCaseSensitive(subjectJSON, "name");
+        cJSON *numOptionsJSON = cJSON_GetObjectItemCaseSensitive(subjectJSON, "numOptions");
+        cJSON *optionsJSON = cJSON_GetObjectItemCaseSensitive(subjectJSON, "options");
+        // Allocate memory for the Subject struct and its options array
+        struct Subject *subject = malloc(sizeof(struct Subject) + sizeof(char *) * numOptionsJSON->valueint);
+        subject->name = strdup(nameJSON->valuestring);
+        subject->numOptions = numOptionsJSON->valueint;
+
+        //printf("\nSubject NAME : %s", subject->name);
+        //printf("\nNumber of options : %d", subject->numOptions);
+
+        // Iterate through the options array and extract the data
+        for (int j = 0; j < subject->numOptions; j++) {
+            cJSON *optionJSON = cJSON_GetArrayItem(optionsJSON, j);
+            subject->options[j] = strdup(optionJSON->valuestring);
+            //printf("\nSubject options[%d], %s", j, subject->options[j]);
+        }
+        // Add the Subject struct to the subjects array
+        addSubject(&data, subject->name, subject->numOptions, subject->options);
+    }
+    printf("\nJSON loaded successfully\n");
+    return data;
+}
+
+cJSON *loadJSON() {
+    FILE *fp;
+    // Read the config.json file into a buffer
+    fp = fopen("../config.json", "rt");
+    if (fp == NULL) {
+        printf("\nError opening config.json");
+        return 1;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char *buffer = malloc(size + 1);
+    fread(buffer, 1, size, fp);
+    fclose(fp);
+
+    // Parse the JSON data using cJSON
+    cJSON *root = cJSON_Parse(buffer);
+    if (root == NULL) {
+        const char *error_ptr = cJSON_GetErrorPtr();
+        printf("Error parsing JSON: %s\n", error_ptr);
+        return 1;
+    }
+    return root;
 }
