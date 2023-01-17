@@ -20,6 +20,7 @@ Date:15/11/2021     Auteur:Vanande
 
 
 int main(int argc, char ** argv){
+    FILE * fp;
     int connected;
     int i = 0;
     //int path;
@@ -31,12 +32,26 @@ int main(int argc, char ** argv){
     struct Subject *subject;
     int numSubjects = 0;
     char *options[2];
+    int err;
+
+    // Read the config.json file into a buffer
+    fp = fopen("config.json", "rt");
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char *buffer = malloc(size + 1);
+    fread(buffer, 1, size, fp);
+    fclose(fp);
+
+    // Parse the JSON data using cJSON
+    cJSON *root = cJSON_Parse(buffer);
+    cJSON *subjectsJSON = cJSON_GetObjectItemCaseSensitive(root, "subjects");
+
+    char *string = cJSON_Print(subjectsJSON);
+    printf("\nJSON I got %s\n", string);
 
 
-
-
-
-
+/*
 // Create and initialize the first Subject struct
 options[0] = "Should I leave my wife?";
 options[1] = "Should I stay single for the rest of my life?";
@@ -47,6 +62,7 @@ options[0] = "Should I invest in stocks?";
 options[1] = "Should I save my money in a bank?";
 addSubject(&subjects, &numSubjects, "financial advice", 2, options);
 
+ */
 // Print the Subject structs
 //for (int i = 0; i < numSubjects; i++)
   //  printSubject(subjects[i]);
@@ -79,7 +95,10 @@ if (!connected) {
                 coolPrint("\nData aren't saved in offline mode", argv);
                 break;
             case -1:
-                printf("Bye !");
+                printf("\nBye !");
+                return 1;
+            default:
+                printf("\nNot an answer so leaving...");
                 return 1;
         }
     }while (ans == 1);
@@ -108,16 +127,23 @@ while(ans != -1) {
             scanf("%d", &ans);
             switch(ans){
                 case 1:
-                    funcUsed();
+                    err = funcUsed();
+                    if (err == -1)
+                        return 1;
                     break;
                 case 2:
-                    funcUsed();
+                    err = funcUsed();
+                    if (err == -1)
+                        return 1;
                     break;
-                case 3:
-                    funcUsed();
-                    break;
+                case 0:
+                    sleep(2);
+                    printf("\nYou are suspect so leaving");
+                    return 1;
                 default:
                     printf("\nYou answered %d, try again", ans);
+                    ans = 0;
+                    break;
             }
 
             break;
@@ -128,16 +154,24 @@ while(ans != -1) {
             scanf("%d", &ans);
             switch(ans){
                 case 1:
-                    funcUsed();
+                    err = funcUsed();
+                    if (err == -1)
+                        return 1;
                     break;
                 case 2:
-                    funcUsed();
+                    err = funcUsed();
+                    if (err == -1)
+                        return 1;
                     break;
-                case 3:
-                    funcUsed();
-                    break;
+                case 0:
+                    sleep(2);
+                    printf("\nYou are suspect so leaving");
+                    return 1;
+
                 default:
-                    printf("\nYou answered %d, try again", ans);
+                    printf("\nYou answered %d", ans);
+                    ans = 0;
+                    break;
             }
             break;
         case -1:
@@ -145,8 +179,14 @@ while(ans != -1) {
             printf("\nGoodbye!\n");
             break;
 
+        case 0:
+            printf("\nYou are suspect so leaving...");
+            return 1;
+
         default:
             printf("\nYou answered %d, try again", ans);
+            ans = 0;
+            break;
 
     }
     if (ans != -1){

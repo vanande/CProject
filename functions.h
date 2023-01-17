@@ -113,10 +113,11 @@ int funcUsed(){
     int algo;
     int i;
     char astro[30];
-    char tweet_user[30];
+    char tweet_user[30] = {0};
     char tweet_example[6][100];
     char signs[12][20];
-    int chosenSigns;
+    int chosenSigns=0;
+    int inputCheck;
 
 
     printf("\nWhere to look for your answer?");
@@ -141,12 +142,21 @@ int funcUsed(){
             strcpy(signs[10],"Aquarius");
             strcpy(signs[11],"Pisces");
 
-            for (i = 0; i < 12; i++){
-                printf("%d ... ", i+1);
-                printf(signs[i]);
-                printf("\n");
-            }
-            scanf("%d", &chosenSigns);
+                for (i = 0; i < 12; i++) {
+                    printf("%d ... ", i + 1);
+                    printf(signs[i]);
+                    printf("\n");
+                }
+            do{
+                chosenSigns = 0;
+                printf("\nAnswer : ");
+                inputCheck = scanf("%d", &chosenSigns);
+                if(inputCheck != 1)
+                {
+                    printf("Invalid input, please enter a number between 1 and 12: ");
+                    scanf("%*[^\n]"); // Used to clear false input. Avoid infinite loop.
+                }
+            }while (chosenSigns < 1 || 12 < chosenSigns || inputCheck != 1);
 
             strcpy(astro,signs[chosenSigns-1]);
                 getAstrological(astro);
@@ -183,6 +193,7 @@ int funcUsed(){
             break;
         default:
             printf("\nDon't need advice ? Ok");
+            return -1;
     }
 
 
@@ -406,17 +417,22 @@ char* getIdFromName(char *name){
 
     // Get content
     data = cJSON_GetObjectItemCaseSensitive(json, "data");
-    if (!cJSON_IsObject(data))
-        printf("Error the data item is not an object");
+    if (!cJSON_IsObject(data)){
+        printf("Got nothing with that username");
+        return 0;
+    }
+
     id = cJSON_GetObjectItemCaseSensitive(data,"id");
-    if (!cJSON_IsString(id))
+    if (!cJSON_IsString(id)){
         printf("Error data.id is not a string");
+        return 0;
+    }
 
     user_id = atoi(id->valuestring);
 
     free(url);
     //  cJSON_Delete(id);
-    return id->valuestring;
+    return cJSON_IsString(id)?id->valuestring:0;
 }
 
 char* getLastTweetID(char *user_name){
@@ -444,7 +460,7 @@ char* getLastTweetID(char *user_name){
     // Get content
     meta = cJSON_GetObjectItemCaseSensitive(json, "meta");
     if (!cJSON_IsObject(meta))
-        printf("\nError the data item is not an object");
+        printf("\nGot nothing with that username");
     last_tweet = cJSON_GetObjectItemCaseSensitive(meta,"newest_id");
     if (!cJSON_IsString(last_tweet)){
         printf("\nThat user either does not exist or hasn't tweet anything for a long time");
@@ -479,14 +495,10 @@ char* getTweetText(char *tweet_id){
 
     // Get content
     data = cJSON_GetObjectItemCaseSensitive(json, "data");
-    if (!cJSON_IsObject(data))
-        printf("Error the data item is not an object");
     text = cJSON_GetObjectItemCaseSensitive(data,"text");
-    if (!cJSON_IsString(text))
-        printf("Error data.text is not a string");
 
     free(url);
-    //  cJSON_Delete(id);
+    //  cJSON_Delete(text);
     return text->valuestring;
 }
 

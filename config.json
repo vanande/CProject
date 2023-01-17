@@ -1,0 +1,20 @@
+{
+  "subjects": [
+    {
+      "name": "relationship advice",
+      "numOptions": 2,
+      "options": [
+        "Should I leave my wife?",
+        "Should I stay single for the rest of my life?"
+      ]
+    },
+    {
+      "name": "financial advice",
+      "numOptions": 2,
+      "options": [
+        "Should I invest in stocks?",
+        "Should I save my money in a bank?"
+      ]
+    }
+  ]
+}
