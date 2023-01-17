@@ -15,6 +15,39 @@
         "Should I invest in stocks?",
         "Should I save my money in a bank?"
       ]
+    },
+    {
+      "name": "career advice",
+      "numOptions": 2,
+      "options": [
+        "Should I take a job offer in another city?",
+        "Should I stay in my current job and try to get a promotion?"
+      ]
+    },
+    {
+      "name": "health advice",
+      "numOptions": 3,
+      "options": [
+        "Should I try a new diet?",
+        "Should I start exercising?",
+        "Should I consult a doctor?"
+      ]
+    },
+    {
+      "name": "education advice",
+      "numOptions": 2,
+      "options": [
+        "Should I go back to school to get a higher degree?",
+        "Should I take online courses to improve my skills?"
+      ]
+    },
+    {
+      "name": "travel advice",
+      "numOptions": 2,
+      "options": [
+        "Should I plan a trip abroad?",
+        "Should I take a road trip within the country?"
+      ]
     }
   ]
 }

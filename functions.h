@@ -15,6 +15,10 @@ struct Subject {
     int numOptions;
     char *options[];
 };
+struct SubjectData {
+    struct Subject** subjects;
+    int numSubjects;
+};
 
 
 int connectDatabase(MYSQL *mysql);
@@ -29,9 +33,9 @@ int lookForUser(char *name, MYSQL *mysql);
 int login(char name[30], MYSQL *mysql);
 struct Subject *createSubject(char *name, int numOptions, char **options);
 void printSubject(struct Subject *subject);
-void addSubject(struct Subject ***subjects, int *numSubjects, char *name, int numOptions, char **options);
+void addSubject(struct SubjectData *data, char *name, int numOptions, char **options);
 void freeSubjects(struct Subject **subjects, int numSubjects);
-void coolPrint(char str[], char ** argv);
+void coolPrint(char str[], OPTIONAL int argv);
 
 unsigned int write_callback(char *ptr, unsigned int size, unsigned int number_members, void *userdata);
 char* getLastTweetID(char *);
@@ -81,7 +85,7 @@ void getLastTweet(char tweet_user[30]){
 
     // Print the last tweet
     strcpy(tweet_text, getTweetText(tweet_id));
-    printf("\nHere is %s last tweet : %s\n",tweet_user, tweet_text);
+    printf("\nHere is %s last tweet :\n     %s\n",tweet_user, tweet_text);
     printf("\nGetting the answer to your universal question...");
     sleep(2);
     if (!a)
@@ -92,10 +96,12 @@ void getLastTweet(char tweet_user[30]){
 
 void getAstrological(char astrological[30]){
     int a;
-    char horoscope[255];
+    char horoscope[1000];
     srand(time(NULL));
     a = rand()%2;
     // Getting horoscope
+    //printf("Getting horoscope\n");
+    //printf("\n%s", getHoroscope(astrological));
     strcpy(horoscope,getHoroscope(astrological));
     printf("\nGetting the great %s opinion", astrological);
     sleep(2);
@@ -107,6 +113,8 @@ void getAstrological(char astrological[30]){
         printf("\nYou definitely should do it according to %s",astrological);
     else
         printf("\nYou definitely shouldn't do it according to %s",astrological);
+
+    printf("\n\n\n\n\n");
 }
 
 int funcUsed(){
@@ -157,10 +165,9 @@ int funcUsed(){
                     scanf("%*[^\n]"); // Used to clear false input. Avoid infinite loop.
                 }
             }while (chosenSigns < 1 || 12 < chosenSigns || inputCheck != 1);
-
             strcpy(astro,signs[chosenSigns-1]);
                 getAstrological(astro);
-
+            sleep(10);
             break;
         case 2:
                 // Init the tweet_example with raw text
@@ -187,8 +194,8 @@ int funcUsed(){
                         tweet_user[i] = tweet_user[i+1];
                     }
                 }
-
                 getLastTweet(tweet_user);
+            sleep(10);
 
             break;
         default:
@@ -213,13 +220,13 @@ void finish_with_error(MYSQL *con){
     exit(1);
 }
 
-void coolPrint(char str[], char ** argv){
+void coolPrint(char str[], OPTIONAL int argv){
     int sleepTime;
     for (int i = 0; i < strlen(str); i++){
         if(str[i] == ' '){
             printf("%c",str[i]);
-            if(argv[1] != NULL){
-                sleepTime = argv[1];
+            if(argv != NULL){
+                sleepTime = argv;
                 sleep(sleepTime);
             } else {
                 Sleep(500);
@@ -319,17 +326,29 @@ void printSubject(struct Subject *subject) {
     }
 }
 
-// Function to create, initialize, and store a Subject struct in the subjects array
+void addSubject(struct SubjectData *data, char *name, int numOptions, char **options) {
+    // Create and initialize the Subject struct
+    struct Subject *subject = createSubject(name, numOptions, options);
+    // Increase the size of the subjects array
+    data->subjects = realloc(data->subjects, (data->numSubjects + 1) * sizeof(struct Subject));
+    // Store the Subject struct in the subjects array
+    data->subjects[data->numSubjects] = subject;
+    // Increment the numSubjects variable
+    // Increment the numSubjects variable
+    data->numSubjects++;
+}
+/*
 void addSubject(struct Subject ***subjects, int *numSubjects, char *name, int numOptions, char **options) {
     // Create and initialize the Subject struct
     struct Subject *subject = createSubject(name, numOptions, options);
     // Increase the size of the subjects array
-    *subjects = realloc(*subjects, (*numSubjects + 1) * sizeof(struct Subject *));
+    *subjects = realloc(*subjects, (*numSubjects + 1) * sizeof(struct Subject));
     // Store the Subject struct in the subjects array
     (*subjects)[*numSubjects] = subject;
     // Increment the numSubjects variable
     (*numSubjects)++;
 }
+*/
 
 // Function to free the memory for each Subject struct in the subjects array
 void freeSubjects(struct Subject **subjects, int numSubjects) {
@@ -540,29 +559,43 @@ cJSON* sendPostRequest(char *url, char * postfields){
 char* getHoroscope(char *astrological){
     char * url;
     char *endpoint = "https://aztro.sameerkumar.website/?";
-    char *day = "day=today";
+    char *day = "&day=today";
     char *sign;
     char * postFields;
     cJSON * json;
     cJSON * description;
 
     // Allocating sign
-    sign = malloc((strlen("&sign=") + strlen(astrological) ) * sizeof(char));
-    strcpy(sign, "&sign=");
+    sign = malloc((strlen("sign=") + strlen(astrological)+100 ) * sizeof(char));
+    if (sign == NULL) {
+        return 0;
+    }
+    strcpy(sign, "sign=");
     strcat(sign,astrological);
 
     // Allocating postFields
-    postFields = malloc ( ( strlen(sign) + strlen(day) ) * sizeof(char) );
-    strcpy(postFields, day);
-    strcat(postFields, sign);
+    postFields = malloc ( ( strlen(sign) + strlen(day)+100 ) * sizeof(char) );
+    if (postFields == NULL) {
+        return 0;
+    }
+    strcpy(postFields, sign);
+    strcat(postFields, day);
 
     // Setting url
     url = malloc((strlen(endpoint) + strlen(postFields)) * sizeof(char));
-
+    if (url == NULL) {
+        return 0;
+    }
     strcpy(url,endpoint);
     strcat(url,postFields);
 
     //printf("Here is url : %s", url);
+
+    //printf("\nURL : %s", url);
+    //printf("\npostFields : %s", postFields);
+
+    if (url[strlen(url)-1] == '\n')
+        url[strlen(url)-1] = '\0';
 
     // Sending request
     json = sendPostRequest(url, postFields);
